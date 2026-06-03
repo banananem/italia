@@ -329,21 +329,30 @@ let currentMode = 'parceria';
 let quantities = { 'Five-Seven': 0, 'MTAR-21': 0, 'Uzi': 0, 'MPX': 0, 'LSD': 0 };
 let history = [];
 
+// Safe storage wrapper — funciona mesmo sem localStorage (modo anônimo, GitHub Pages, etc.)
+const store = (function() {
+  let mem = {};
+  let ok = false;
+  try { localStorage.setItem('__test__','1'); localStorage.removeItem('__test__'); ok = true; } catch(e) {}
+  return {
+    set: function(k,v){ try{ if(ok) localStorage.setItem(k,v); } catch(e){} mem[k]=v; },
+    get: function(k){ try{ if(ok){ const v=localStorage.getItem(k); if(v!==null) return v; } } catch(e){} return mem[k]||null; }
+  };
+})();
+
 function saveState() {
-  try {
-    localStorage.setItem(LS_MODE, currentMode);
-    localStorage.setItem(LS_QTY, JSON.stringify(quantities));
-    localStorage.setItem(LS_HIST, JSON.stringify(history));
-  } catch(e) {}
+  store.set(LS_MODE, currentMode);
+  store.set(LS_QTY,  JSON.stringify(quantities));
+  store.set(LS_HIST, JSON.stringify(history));
 }
 
 function loadState() {
   try {
-    const mode = localStorage.getItem(LS_MODE);
+    const mode = store.get(LS_MODE);
     if (mode) currentMode = mode;
-    const qty = localStorage.getItem(LS_QTY);
+    const qty = store.get(LS_QTY);
     if (qty) quantities = { ...quantities, ...JSON.parse(qty) };
-    const hist = localStorage.getItem(LS_HIST);
+    const hist = store.get(LS_HIST);
     if (hist) history = JSON.parse(hist);
   } catch(e) {}
 }
